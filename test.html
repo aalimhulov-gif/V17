@@ -1,54 +1,60 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Test - Budget Buddy</title>
     <style>
-        body { 
-            background: #000; 
-            color: #fff; 
-            font-family: Arial; 
-            padding: 20px; 
-            text-align: center;
+      body {
+        background: #000;
+        color: #fff;
+        font-family: Arial;
+        padding: 20px;
+        text-align: center;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      h1 {
+        color: #4ade80;
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #333;
+        border-radius: 50%;
+        border-top-color: #4ade80;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-        h1 { color: #4ade80; }
-        .status { 
-            padding: 10px; 
-            margin: 10px 0; 
-            border-radius: 8px; 
-            background: rgba(255,255,255,0.1);
-        }
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #333;
-            border-radius: 50%;
-            border-top-color: #4ade80;
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🏠 Budget Buddy V15</h1>
-        <div class="status">
-            <div class="loading"></div>
-            Загрузка приложения...
-        </div>
-        <div id="status"></div>
-        
-        <script>
-            console.log('🚀 Test page loaded');
-            
-            // Проверяем основное приложение
-            setTimeout(() => {
-                document.getElementById('status').innerHTML = `
+      <h1>🏠 Budget Buddy V15</h1>
+      <div class="status">
+        <div class="loading"></div>
+        Загрузка приложения...
+      </div>
+      <div id="status"></div>
+
+      <script>
+        console.log("🚀 Test page loaded");
+
+        // Проверяем основное приложение
+        setTimeout(() => {
+          document.getElementById("status").innerHTML = `
                     <div class="status">
                         ✅ Тестовая страница работает!<br>
                         📍 URL: ${window.location.href}<br>
@@ -61,8 +67,8 @@
                         </a>
                     </div>
                 `;
-            }, 1000);
-        </script>
+        }, 1000);
+      </script>
     </div>
-</body>
+  </body>
 </html>

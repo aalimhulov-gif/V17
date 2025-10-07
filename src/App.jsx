@@ -3,6 +3,7 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
 import LoadingSpinner from './components/LoadingSpinner.jsx'
+import ProfileGuard from './components/ProfileGuard.jsx'
 import Home from './pages/Home.jsx'
 import Categories from './pages/Categories.jsx'
 import Goals from './pages/Goals.jsx'
@@ -19,7 +20,11 @@ import { BudgetProvider } from './context/BudgetProvider.jsx'
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <LoadingSpinner text="Проверяем авторизацию..." />
-  return user ? children : <Navigate to="/login" replace />
+  return user ? (
+    <ProfileGuard>
+      {children}
+    </ProfileGuard>
+  ) : <Navigate to="/login" replace />
 }
 
 export default function App() {

@@ -325,11 +325,67 @@ export function BudgetProvider({ children }) {
   const getCurrentUserProfile = () => {
     if (!user) return null
     
-    // Ищем профиль по userId или по имени "Артур" (временно)
-    const userProfile = profiles.find(p => p.userId === user.uid) || 
-                       profiles.find(p => p.name === 'Артур')
+    // Сначала ищем профиль по userId
+    let userProfile = profiles.find(p => p.userId === user.uid)
     
-    return userProfile
+    if (userProfile) {
+      return userProfile
+    }
+    
+    // Если профиль не найден, пытаемся найти по email или создать новый
+    console.log('🔍 Profile not found for user:', user.uid, user.email)
+    
+    // Ищем незакрепленный профиль, который может подойти пользователю
+    const unclaimed = profiles.find(p => !p.userId)
+    if (unclaimed) {
+      console.log('🎯 Found unclaimed profile:', unclaimed.name)
+      // Автоматически привязываем первый незакрепленный профиль
+      assignProfileToUser(unclaimed.id, user.uid)
+      return { ...unclaimed, userId: user.uid }
+    }
+    
+    // Если нет незакрепленных профилей, создаем новый
+    console.log('➕ Creating new profile for user')
+    return null // Будет создан автоматически
+  }
+
+  // Функция привязки профиля к пользователю
+  async function assignProfileToUser(profileId, userId) {
+    try {
+      await updateDoc(doc(db, 'budgets', budgetId, 'profiles', profileId), {
+        userId: userId,
+        lastLogin: serverTimestamp()
+      })
+      console.log(`✅ Profile ${profileId} assigned to user ${userId}`)
+    } catch (error) {
+      console.error('❌ Failed to assign profile:', error)
+    }
+  }
+
+  // Создание профиля для нового пользователя
+  async function createProfileForUser(userName = null) {
+    if (!user || !budgetId) return null
+    
+    try {
+      const profileName = userName || user.email?.split('@')[0] || 'Новый пользователь'
+      
+      const newProfile = {
+        name: profileName,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+        online: false,
+        lastSeen: null
+      }
+      
+      const docRef = await addDoc(collection(db, 'budgets', budgetId, 'profiles'), newProfile)
+      console.log(`✅ Created new profile: ${profileName} for user ${user.uid}`)
+      
+      return { id: docRef.id, ...newProfile }
+    } catch (error) {
+      console.error('❌ Failed to create profile:', error)
+      return null
+    }
   }
 
   // Presence - улучшенная версия
@@ -390,7 +446,7 @@ export function BudgetProvider({ children }) {
     createBudget, joinBudget, leaveFamily,
 
     profiles, categories, goals, operations,
-    getCurrentUserProfile,
+    getCurrentUserProfile, assignProfileToUser, createProfileForUser,
 
     addCategory, updateCategory, deleteCategory, setLimitForCategory,
     addGoal, contributeToGoal, getGoalSaved,
