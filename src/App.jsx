@@ -2,6 +2,7 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Navbar from './components/Navbar.jsx'
+import LoadingSpinner from './components/LoadingSpinner.jsx'
 import Home from './pages/Home.jsx'
 import Categories from './pages/Categories.jsx'
 import Goals from './pages/Goals.jsx'
@@ -11,12 +12,13 @@ import Settings from './pages/Settings.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Budget from './pages/Budget.jsx'
+import Debug from './pages/Debug.jsx'
 import { AuthProvider, useAuth } from './firebase/auth.jsx'
 import { BudgetProvider } from './context/BudgetProvider.jsx'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="p-8">Загрузка...</div>
+  if (loading) return <LoadingSpinner text="Проверяем авторизацию..." />
   return user ? children : <Navigate to="/login" replace />
 }
 
@@ -35,6 +37,7 @@ export default function App() {
               <Route path="/operations" element={<ProtectedRoute><Operations /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
+              <Route path="/debug" element={<ProtectedRoute><Debug /></ProtectedRoute>} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
             </Routes>

@@ -12,8 +12,23 @@ const firebaseConfig = {
   storageBucket: "budget-ami.firebasestorage.app",
   messagingSenderId: "976854941281",
   appId: "1:976854941281:web:f40e81033cf52d236af420"
-};
+}
 
-export const app = initializeApp(firebaseConfig)
-export const auth = getAuth(app)
-export const db = getFirestore(app)
+// Проверяем что все необходимые поля заполнены
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  console.error('Firebase configuration is incomplete. Please check your firebaseConfig.')
+}
+
+let app, auth, db
+
+try {
+  app = initializeApp(firebaseConfig)
+  auth = getAuth(app)
+  db = getFirestore(app)
+  console.log('Firebase initialized successfully')
+} catch (error) {
+  console.error('Firebase initialization error:', error)
+  throw new Error('Failed to initialize Firebase')
+}
+
+export { app, auth, db }

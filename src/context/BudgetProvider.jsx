@@ -39,9 +39,21 @@ export function BudgetProvider({ children }) {
     async function loadRates() {
       try {
         const res = await fetch('https://api.exchangerate.host/latest?base=PLN&symbols=PLN,USD,UAH')
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
         const data = await res.json()
-        if (data?.rates) setRates({ PLN: data.rates.PLN || 1, USD: data.rates.USD || 0.25, UAH: data.rates.UAH || 4 })
-      } catch (e) { console.error('Rates fetch error', e) }
+        if (data?.rates) {
+          setRates({ 
+            PLN: data.rates.PLN || 1, 
+            USD: data.rates.USD || 0.25, 
+            UAH: data.rates.UAH || 4 
+          })
+        }
+      } catch (e) { 
+        console.error('Rates fetch error:', e)
+        // Оставляем дефолтные курсы если не удалось загрузить
+      }
     }
     loadRates()
   }, [])
@@ -49,20 +61,42 @@ export function BudgetProvider({ children }) {
   // Live subscriptions
   useEffect(() => {
     if (!user || !budgetId) return
-    const unsubProfiles = onSnapshot(collection(db, 'budgets', budgetId, 'profiles'), (snap) => {
-      setProfiles(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    const unsubCategories = onSnapshot(collection(db, 'budgets', budgetId, 'categories'), (snap) => {
-      setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    const unsubGoals = onSnapshot(collection(db, 'budgets', budgetId, 'goals'), (snap) => {
-      setGoals(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    })
-    const unsubOps = onSnapshot(
-      query(collection(db, 'budgets', budgetId, 'operations'), orderBy('date', 'desc')),
-      (snap) => setOperations(snap.docs.map(d => ({ id: d.id, ...d.data() })))
-    )
-    return () => { unsubProfiles(); unsubCategories(); unsubGoals(); unsubOps() }
+    
+    try {
+      const unsubProfiles = onSnapshot(
+        collection(db, 'budgets', budgetId, 'profiles'), 
+        (snap) => {
+          setProfiles(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        },
+        (error) => console.error('Profiles subscription error:', error)
+      )
+      
+      const unsubCategories = onSnapshot(
+        collection(db, 'budgets', budgetId, 'categories'), 
+        (snap) => {
+          setCategories(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        },
+        (error) => console.error('Categories subscription error:', error)
+      )
+      
+      const unsubGoals = onSnapshot(
+        collection(db, 'budgets', budgetId, 'goals'), 
+        (snap) => {
+          setGoals(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+        },
+        (error) => console.error('Goals subscription error:', error)
+      )
+      
+      const unsubOps = onSnapshot(
+        query(collection(db, 'budgets', budgetId, 'operations'), orderBy('date', 'desc')),
+        (snap) => setOperations(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+        (error) => console.error('Operations subscription error:', error)
+      )
+      
+      return () => { unsubProfiles(); unsubCategories(); unsubGoals(); unsubOps() }
+    } catch (error) {
+      console.error('Subscription setup error:', error)
+    }
   }, [user, budgetId])
 
   // Calculations
