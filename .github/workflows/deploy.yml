@@ -12,7 +12,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,8 +20,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
+          node-version: "18"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -38,16 +38,16 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    
+
     # Устанавливаем environment для Pages
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
+
     permissions:
       pages: write
       id-token: write
-    
+
     steps:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
