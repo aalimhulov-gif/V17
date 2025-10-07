@@ -347,10 +347,47 @@ export function BudgetProvider({ children }) {
     }
   }
 
+  // Выход из семьи
+  async function leaveFamily() {
+    if (!budgetId || !user) {
+      console.error('❌ Cannot leave family: no budget or user')
+      return false
+    }
+
+    try {
+      const currentProfile = getCurrentUserProfile()
+      if (!currentProfile) {
+        console.error('❌ Cannot leave family: profile not found')
+        return false
+      }
+
+      // Удаляем профиль пользователя из семьи
+      await deleteDoc(doc(db, 'budgets', budgetId, 'profiles', currentProfile.id))
+      
+      // Очищаем локальные данные
+      setBudgetId(null)
+      setBudgetCode('')
+      localStorage.removeItem('budgetId')
+      localStorage.removeItem('budgetCode')
+      
+      // Очищаем состояние
+      setProfiles([])
+      setCategories([])
+      setGoals([])
+      setOperations([])
+
+      console.log('✅ Successfully left family')
+      return true
+    } catch (error) {
+      console.error('❌ Failed to leave family:', error)
+      return false
+    }
+  }
+
   const value = {
     budgetId, setBudgetId,
     budgetCode, updateBudgetCode,
-    createBudget, joinBudget,
+    createBudget, joinBudget, leaveFamily,
 
     profiles, categories, goals, operations,
     getCurrentUserProfile,

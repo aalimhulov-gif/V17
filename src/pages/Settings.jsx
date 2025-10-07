@@ -4,7 +4,7 @@ import { useAuth } from '../firebase/auth.jsx'
 import { useSound } from '../hooks/useSound.js'
 
 export default function Settings() {
-  const { currency, setCurrency, theme, toggleTheme, rates } = useBudget()
+  const { currency, setCurrency, theme, toggleTheme, rates, leaveFamily, budgetId } = useBudget()
   const { user } = useAuth()
   const { playSound } = useSound()
   const [notifications, setNotifications] = useState(true)
@@ -56,13 +56,29 @@ export default function Settings() {
     console.log('Очистка данных...')
   }
 
-  const handleLeaveFamily = () => {
+  const handleLeaveFamily = async () => {
+    if (!budgetId) {
+      alert('Вы не состоите в семье')
+      return
+    }
+
     if (window.confirm('Вы уверены, что хотите покинуть семью? Это действие нельзя отменить.')) {
       playSound('warning')
-      // Здесь будет логика выхода из семьи
-      console.log('Выход из семьи...')
-      // TODO: Реализовать логику удаления пользователя из семейной группы
-      alert('Функция будет реализована в следующем обновлении')
+      
+      try {
+        const success = await leaveFamily()
+        if (success) {
+          playSound('success')
+          alert('Вы успешно покинули семью')
+        } else {
+          playSound('error')
+          alert('Ошибка при выходе из семьи. Попробуйте позже.')
+        }
+      } catch (error) {
+        console.error('Error leaving family:', error)
+        playSound('error')
+        alert('Произошла ошибка. Проверьте подключение к интернету.')
+      }
     }
   }
 
@@ -424,18 +440,21 @@ export default function Settings() {
             <div className="text-sm text-zinc-400">Синхронизировать</div>
           </button>
 
-          <button 
-            onClick={handleLeaveFamily}
-            className="p-4 rounded-xl text-left transition-all duration-300 hover:scale-105 group"
-            style={{
-              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1))',
-              border: '1px solid rgba(245, 158, 11, 0.2)'
-            }}
-          >
-            <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">🚪</div>
-            <div className="text-white font-medium">Покинуть семью</div>
-            <div className="text-sm text-zinc-400">Выйти из группы</div>
-          </button>
+          {/* Кнопка выхода из семьи - показывается только если пользователь в семье */}
+          {budgetId && (
+            <button 
+              onClick={handleLeaveFamily}
+              className="p-4 rounded-xl text-left transition-all duration-300 hover:scale-105 group"
+              style={{
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1))',
+                border: '1px solid rgba(245, 158, 11, 0.2)'
+              }}
+            >
+              <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">🚪</div>
+              <div className="text-white font-medium">Покинуть семью</div>
+              <div className="text-sm text-zinc-400">Выйти из группы</div>
+            </button>
+          )}
 
           <button 
             onClick={handleClearData}
