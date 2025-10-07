@@ -6,7 +6,6 @@ import LoadingSpinner from './components/LoadingSpinner.jsx'
 import Home from './pages/Home.jsx'
 import Categories from './pages/Categories.jsx'
 import Goals from './pages/Goals.jsx'
-import Limits from './pages/Limits.jsx'
 import Operations from './pages/Operations.jsx'
 import Settings from './pages/Settings.jsx'
 import Login from './pages/Login.jsx'
@@ -35,7 +34,6 @@ export default function App() {
               <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
               <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
               <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
-              <Route path="/limits" element={<ProtectedRoute><Limits /></ProtectedRoute>} />
               <Route path="/operations" element={<ProtectedRoute><Operations /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
