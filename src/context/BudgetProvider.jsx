@@ -20,7 +20,7 @@ export function BudgetProvider({ children }) {
 
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'PLN')
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
-  const [rates, setRates] = useState({ PLN: 1, USD: 0.25, UAH: 4 })
+  const [rates, setRates] = useState({ PLN: 1, USD: 0.25, UAH: 10.5 })
 
   // Theme
   useEffect(() => {
@@ -34,8 +34,11 @@ export function BudgetProvider({ children }) {
     localStorage.setItem('currency', currency)
   }, [currency])
 
-  // FX Rates
+  // FX Rates - временно отключаем внешний API
   useEffect(() => {
+    console.log('💱 Using default exchange rates (external API disabled)')
+    // Можно включить позже когда исправим сетевые проблемы
+    /*
     async function loadRates() {
       try {
         const res = await fetch('https://api.exchangerate.host/latest?base=PLN&symbols=PLN,USD,UAH')
@@ -47,7 +50,7 @@ export function BudgetProvider({ children }) {
           setRates({ 
             PLN: data.rates.PLN || 1, 
             USD: data.rates.USD || 0.25, 
-            UAH: data.rates.UAH || 4 
+            UAH: data.rates.UAH || 10.5 
           })
         }
       } catch (e) { 
@@ -56,6 +59,7 @@ export function BudgetProvider({ children }) {
       }
     }
     loadRates()
+    */
   }, [])
 
   // Live subscriptions

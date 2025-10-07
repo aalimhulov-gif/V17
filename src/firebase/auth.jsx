@@ -6,24 +6,31 @@ import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndP
 const AuthCtx = createContext(null)
 
 export function AuthProvider({ children }) {
+  console.log('🔐 AuthProvider initializing...')
+  
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
+    console.log('🔐 Setting up auth state listener...')
     try {
       const unsub = onAuthStateChanged(auth, (u) => {
+        console.log('🔐 Auth state changed:', u ? `User: ${u.email}` : 'No user')
         setUser(u)
         setLoading(false)
         setError(null)
       }, (error) => {
-        console.error('Auth state change error:', error)
+        console.error('❌ Auth state change error:', error)
         setError(error.message)
         setLoading(false)
       })
-      return () => unsub()
+      return () => {
+        console.log('🔐 Cleaning up auth listener')
+        unsub()
+      }
     } catch (error) {
-      console.error('Auth initialization error:', error)
+      console.error('❌ Auth initialization error:', error)
       setError('Ошибка инициализации аутентификации')
       setLoading(false)
     }
