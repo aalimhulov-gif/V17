@@ -59,6 +59,9 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       setError(null)
+      // Очистка localStorage при выходе
+      localStorage.removeItem('budgetId')
+      localStorage.removeItem('budgetCode')
       return await signOut(auth)
     } catch (error) {
       setError(error.message)
