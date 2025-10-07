@@ -181,6 +181,33 @@ export function BudgetProvider({ children }) {
     return savedByGoal[goalId] || 0
   }
 
+  // Редактирование цели
+  async function editGoal(goalId, updatedGoal) {
+    if (!budgetId) return
+    try {
+      const goalRef = doc(db, 'budgets', budgetId, 'goals', goalId)
+      await updateDoc(goalRef, {
+        ...updatedGoal,
+        updatedAt: serverTimestamp()
+      })
+    } catch (error) {
+      console.error('Error editing goal:', error)
+      throw error
+    }
+  }
+
+  // Удаление цели
+  async function deleteGoal(goalId) {
+    if (!budgetId) return
+    try {
+      const goalRef = doc(db, 'budgets', budgetId, 'goals', goalId)
+      await deleteDoc(goalRef)
+    } catch (error) {
+      console.error('Error deleting goal:', error)
+      throw error
+    }
+  }
+
   // Helpers
   function convert(amountPLN) {
     const rate = rates[currency] || 1

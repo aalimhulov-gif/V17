@@ -5,8 +5,9 @@ import Modal from '../components/Modal'
 import ProgressBar from '../components/ProgressBar'
 
 export default function Goals() {
-  const { goals, addGoal, contributeToGoal, profiles, currency, convert, getGoalSaved } = useBudget()
+  const { goals, addGoal, editGoal, deleteGoal, contributeToGoal, profiles, currency, convert, getGoalSaved } = useBudget()
   const [open, setOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
   const [transferOpen, setTransferOpen] = useState(false)
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('🎯')
@@ -15,6 +16,7 @@ export default function Goals() {
   const [selected, setSelected] = useState(null)
   const [profileId, setProfileId] = useState('')
   const [sum, setSum] = useState('')
+  const [editingGoal, setEditingGoal] = useState(null)
 
   // добавление новой цели
   const add = async (e) => {
@@ -35,6 +37,40 @@ export default function Goals() {
     setTransferOpen(false)
     setProfileId('')
     setSum('')
+  }
+
+  // начало редактирования цели
+  const startEdit = (goal) => {
+    setEditingGoal(goal)
+    setName(goal.name)
+    setEmoji(goal.emoji || '🎯')
+    setAmount(goal.amount.toString())
+    setDeadline(goal.deadline || '')
+    setEditOpen(true)
+  }
+
+  // сохранение изменений цели
+  const saveEdit = async (e) => {
+    e.preventDefault()
+    await editGoal(editingGoal.id, {
+      name,
+      emoji,
+      amount: parseFloat(amount),
+      deadline
+    })
+    setEditOpen(false)
+    setEditingGoal(null)
+    setName('')
+    setEmoji('🎯')
+    setAmount('')
+    setDeadline('')
+  }
+
+  // удаление цели
+  const handleDelete = async (goalId) => {
+    if (window.confirm('Вы уверены, что хотите удалить эту цель?')) {
+      await deleteGoal(goalId)
+    }
   }
 
   const containerVariants = {
@@ -174,13 +210,29 @@ export default function Goals() {
                           )}
                         </div>
                       </div>
-                      <button
-                        onClick={() => { setSelected(goal); setTransferOpen(true) }}
-                        className="btn-secondary py-2 px-4 text-sm rounded-xl hover:scale-105 transition-transform"
-                        disabled={isCompleted}
-                      >
-                        💰 Пополнить
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => startEdit(goal)}
+                          className="btn-secondary py-2 px-3 text-sm rounded-xl hover:scale-105 transition-transform"
+                          title="Редактировать"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDelete(goal.id)}
+                          className="btn-secondary py-2 px-3 text-sm rounded-xl hover:scale-105 transition-transform hover:bg-red-500/20"
+                          title="Удалить"
+                        >
+                          🗑️
+                        </button>
+                        <button
+                          onClick={() => { setSelected(goal); setTransferOpen(true) }}
+                          className="btn-secondary py-2 px-4 text-sm rounded-xl hover:scale-105 transition-transform"
+                          disabled={isCompleted}
+                        >
+                          💰 Пополнить
+                        </button>
+                      </div>
                     </div>
 
                     <div className="space-y-3">
@@ -307,6 +359,106 @@ export default function Goals() {
               }}
             >
               Создать цель
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Модалка редактирования */}
+      <Modal 
+        open={editOpen} 
+        onClose={() => { 
+          setEditOpen(false)
+          setEditingGoal(null)
+          setName('')
+          setEmoji('🎯')
+          setAmount('')
+          setDeadline('')
+        }}
+        title="Редактировать цель"
+      >
+        <form onSubmit={saveEdit} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-300">Эмодзи</label>
+              <input
+                className="input w-full text-center text-2xl rounded-xl"
+                placeholder="🎯"
+                value={emoji}
+                onChange={e => setEmoji(e.target.value)}
+                maxLength={2}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-300">Название цели</label>
+              <input
+                className="input w-full rounded-xl"
+                placeholder="Подушка безопасности"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-300">Целевая сумма</label>
+              <input
+                className="input w-full rounded-xl"
+                type="number"
+                placeholder="10000"
+                value={amount}
+                onChange={e => setAmount(e.target.value)}
+                min="0"
+                step="0.01"
+                required
+              />
+              <p className="text-xs text-zinc-500">Сумма в {currency}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-300">Дедлайн (необязательно)</label>
+              <input
+                className="input w-full rounded-xl"
+                type="date"
+                value={deadline}
+                onChange={e => setDeadline(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-3 pt-4">
+            <button 
+              type="button" 
+              onClick={() => {
+                setEditOpen(false)
+                setEditingGoal(null)
+                setName('')
+                setEmoji('🎯')
+                setAmount('')
+                setDeadline('')
+              }}
+              className="flex-1 px-6 py-3 rounded-xl border border-white/20 text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              Отмена
+            </button>
+            <button 
+              type="submit"
+              disabled={!name.trim() || !amount}
+              className="flex-1 px-6 py-3 rounded-xl border border-blue-500/30 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gradient-to-r hover:from-blue-500/20 hover:to-purple-500/20 transition-all duration-300 backdrop-blur-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              Сохранить
             </button>
           </div>
         </form>
