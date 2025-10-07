@@ -5,13 +5,13 @@ import { getFirestore } from 'firebase/firestore'
 // 🔧 НАСТРОЙКА FIREBASE
 // Замените эти значения на ваши данные из Firebase Console
 const firebaseConfig = {
-  apiKey: "your-api-key-here",
-  authDomain: "your-project.firebaseapp.com",
-  databaseURL: "https://your-project-default-rtdb.region.firebasedatabase.app",
-  projectId: "your-project-id",
-  storageBucket: "your-project.firebasestorage.app",
-  messagingSenderId: "your-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyCGN93LsNnRGcqGpesVWAg8jP0m6XsQAuA",
+  authDomain: "budget-ami.firebaseapp.com",
+  databaseURL: "https://budget-ami-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "budget-ami",
+  storageBucket: "budget-ami.firebasestorage.app",
+  messagingSenderId: "976854941281",
+  appId: "1:976854941281:web:f40e81033cf52d236af420"
 }
 
 console.log('🔧 Initializing Firebase...')
@@ -22,7 +22,7 @@ console.log('Config check:', {
 })
 
 // Проверяем что все необходимые поля заполнены
-if (!firebaseConfig.apiKey || !firebaseConfig.projectId || firebaseConfig.apiKey === "your-api-key-here") {
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
   console.error('❌ Firebase configuration is incomplete. Please check your firebaseConfig.')
   throw new Error('Firebase configuration is incomplete. Please update firebaseConfig.js with your actual Firebase credentials.')
 }
