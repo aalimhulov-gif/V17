@@ -56,6 +56,16 @@ export default function Settings() {
     console.log('Очистка данных...')
   }
 
+  const handleLeaveFamily = () => {
+    if (window.confirm('Вы уверены, что хотите покинуть семью? Это действие нельзя отменить.')) {
+      playSound('warning')
+      // Здесь будет логика выхода из семьи
+      console.log('Выход из семьи...')
+      // TODO: Реализовать логику удаления пользователя из семейной группы
+      alert('Функция будет реализована в следующем обновлении')
+    }
+  }
+
   const currencyOptions = [
     { value: 'PLN', label: 'PLN — Польский злотый', flag: '🇵🇱' },
     { value: 'USD', label: 'USD — Доллар США', flag: '🇺🇸' },
@@ -412,6 +422,19 @@ export default function Settings() {
             <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">🔄</div>
             <div className="text-white font-medium">Синхронизация</div>
             <div className="text-sm text-zinc-400">Синхронизировать</div>
+          </button>
+
+          <button 
+            onClick={handleLeaveFamily}
+            className="p-4 rounded-xl text-left transition-all duration-300 hover:scale-105 group"
+            style={{
+              background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.1))',
+              border: '1px solid rgba(245, 158, 11, 0.2)'
+            }}
+          >
+            <div className="text-2xl mb-2 group-hover:scale-110 transition-transform duration-300">🚪</div>
+            <div className="text-white font-medium">Покинуть семью</div>
+            <div className="text-sm text-zinc-400">Выйти из группы</div>
           </button>
 
           <button 
