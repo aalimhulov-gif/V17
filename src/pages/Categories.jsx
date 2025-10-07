@@ -9,11 +9,12 @@ export default function Categories() {
   const [editing, setEditing] = useState(null)
   const [name, setName] = useState('')
   const [emoji, setEmoji] = useState('🍔')
+  const [type, setType] = useState('expense')
   const [limit, setLimit] = useState('')
 
   const save = async (e) => {
     e.preventDefault()
-    const payload = { name, emoji, limit: limit ? parseFloat(limit) : 0 }
+    const payload = { name, emoji, type, limit: limit ? parseFloat(limit) : 0 }
     if (editing) {
       await updateCategory(editing.id, payload)
     } else {
@@ -23,6 +24,7 @@ export default function Categories() {
     setEditing(null)
     setName('')
     setEmoji('🍔')
+    setType('expense')
     setLimit('')
   }
 
@@ -30,6 +32,7 @@ export default function Categories() {
     setEditing(cat)
     setName(cat.name)
     setEmoji(cat.emoji || '🍔')
+    setType(cat.type || 'expense')
     setLimit(cat.limit || '')
     setOpen(true)
   }
@@ -182,7 +185,7 @@ export default function Categories() {
       {/* Модалка для добавления/редактирования */}
       <Modal 
         open={open} 
-        onClose={() => { setOpen(false); setEditing(null); setName(''); setEmoji('🍔'); setLimit('') }}
+        onClose={() => { setOpen(false); setEditing(null); setName(''); setEmoji('🍔'); setType('expense'); setLimit('') }}
         title={editing ? 'Изменить категорию' : 'Новая категория'}
       >
         <form onSubmit={save} className="space-y-6">
@@ -210,6 +213,19 @@ export default function Categories() {
                 required
               />
             </div>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-zinc-300">Тип</label>
+              <select
+                className="input w-full"
+                value={type}
+                onChange={e => setType(e.target.value)}
+              >
+                <option value="income">Доходы</option>
+                <option value="expense">Расходы</option>
+                <option value="both">Универсальная</option>
+              </select>
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -229,7 +245,7 @@ export default function Categories() {
           <div className="flex gap-3 pt-4">
             <button 
               type="button" 
-              onClick={() => { setOpen(false); setEditing(null); setName(''); setEmoji('🍔'); setLimit('') }}
+              onClick={() => { setOpen(false); setEditing(null); setName(''); setEmoji('🍔'); setType('expense'); setLimit('') }}
               className="flex-1 px-6 py-3 rounded-xl border border-white/20 text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-xl"
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',

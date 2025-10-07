@@ -40,6 +40,7 @@ export default function Navbar() {
   const navItems = [
     { to: '/', label: 'Главная' },
     { to: '/categories', label: 'Категории' },
+    { to: '/limits', label: 'Лимиты' },
     { to: '/goals', label: 'Цели' },
     { to: '/operations', label: 'Операции' },
     { to: '/budget', label: 'Семья' },
@@ -330,6 +331,7 @@ export default function Navbar() {
                   <span className="relative z-10 text-lg">
                     {item.to === '/' && '🏠'}
                     {item.to === '/categories' && '📂'}
+                    {item.to === '/limits' && '💰'}
                     {item.to === '/goals' && '🎯'}
                     {item.to === '/operations' && '💱'}
                     {item.to === '/budget' && '👨‍👩‍👧‍👦'}

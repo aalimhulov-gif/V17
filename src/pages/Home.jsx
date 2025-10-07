@@ -8,10 +8,11 @@ import BalanceCard from '../components/BalanceCard'
 import Modal from '../components/Modal'
 
 export default function Home() {
-  const { profiles, totals, totalsByProfile, currency, convert, addOperation } = useBudget()
+  const { profiles, categories, totals, totalsByProfile, currency, convert, addOperation, budgetId } = useBudget()
   const { user } = useAuth()
   const { playSound } = useSound()
   const deviceType = useDeviceType()
+  
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ type: 'income', profileId: '', amount: '', categoryId: '', note: '' })
   const [hoveredProfile, setHoveredProfile] = useState(null)
@@ -30,7 +31,7 @@ export default function Home() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!form.profileId || !form.amount) return
+    if (!form.profileId || !form.amount || !form.categoryId) return
     
     try {
       await addOperation(form)
@@ -304,102 +305,6 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Статистические блоки */}
-      <motion.div variants={itemVariants} className="grid gap-6 lg:grid-cols-3">
-        <div 
-          className="p-6 rounded-2xl"
-          style={{
-            background: `
-              linear-gradient(145deg, 
-                rgba(34, 197, 94, 0.1) 0%, 
-                rgba(16, 185, 129, 0.05) 100%
-              )
-            `,
-            backdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(34, 197, 94, 0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-green-500/20 flex items-center justify-center">
-              <span className="text-2xl">📈</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-green-400">Доходы</h3>
-              <p className="text-sm text-zinc-400">За текущий период</p>
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-white mb-2">
-            +{convert(totals.income).toFixed(2)} {currency}
-          </div>
-          <div className="text-sm text-green-400">
-            {profiles.length} {profiles.length === 1 ? 'профиль' : profiles.length < 5 ? 'профиля' : 'профилей'}
-          </div>
-        </div>
-
-        <div 
-          className="p-6 rounded-2xl"
-          style={{
-            background: `
-              linear-gradient(145deg, 
-                rgba(239, 68, 68, 0.1) 0%, 
-                rgba(220, 38, 38, 0.05) 100%
-              )
-            `,
-            backdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(239, 68, 68, 0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-red-500/20 flex items-center justify-center">
-              <span className="text-2xl">📉</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-red-400">Расходы</h3>
-              <p className="text-sm text-zinc-400">За текущий период</p>
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-white mb-2">
-            -{convert(totals.expense).toFixed(2)} {currency}
-          </div>
-          <div className="text-sm text-red-400">
-            Общие траты семьи
-          </div>
-        </div>
-
-        <div 
-          className="p-6 rounded-2xl"
-          style={{
-            background: `
-              linear-gradient(145deg, 
-                rgba(99, 102, 241, 0.1) 0%, 
-                rgba(139, 92, 246, 0.05) 100%
-              )
-            `,
-            backdropFilter: 'blur(20px) saturate(180%)',
-            border: '1px solid rgba(99, 102, 241, 0.2)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
-          }}
-        >
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center">
-              <span className="text-2xl">💰</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-blue-400">Баланс</h3>
-              <p className="text-sm text-zinc-400">Общий семейный</p>
-            </div>
-          </div>
-          <div className="text-2xl font-bold text-white mb-2">
-            {convert(totals.balance).toFixed(2)} {currency}
-          </div>
-          <div className={`text-sm ${totals.balance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {totals.balance >= 0 ? 'Положительный' : 'Отрицательный'}
-          </div>
-        </div>
-      </motion.div>
-
       {/* Модальное окно */}
       <Modal open={open} onClose={() => setOpen(false)} title="Добавить операцию">
         <form onSubmit={submit} className="space-y-4">
@@ -414,7 +319,7 @@ export default function Home() {
                 <button
                   key={type.value}
                   type="button"
-                  onClick={() => setForm(f => ({ ...f, type: type.value }))}
+                  onClick={() => setForm(f => ({ ...f, type: type.value, categoryId: '' }))}
                   className={`p-3 rounded-xl font-medium transition-all duration-300 ${
                     form.type === type.value
                       ? `bg-${type.color}-500/20 text-${type.color}-400 border border-${type.color}-500/30`
@@ -438,6 +343,27 @@ export default function Home() {
               onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
               required
             />
+          </div>
+
+          {/* Категория */}
+          <div>
+            <div className="label">Категория</div>
+            <select
+              className="input"
+              value={form.categoryId}
+              onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))}
+              required
+            >
+              <option value="">Выберите категорию</option>
+              {categories
+                .filter(cat => !cat.type || cat.type === form.type || cat.type === 'both')
+                .map(category => (
+                  <option key={category.id} value={category.id}>
+                    {category.emoji} {category.name}
+                  </option>
+                ))
+              }
+            </select>
           </div>
 
           {/* Заметка */}

@@ -204,8 +204,31 @@ export function BudgetProvider({ children }) {
       currency: 'PLN',
       code
     })
+    
+    // Создаем профили
     await addDoc(collection(budgetRef, 'profiles'), { name: 'Артур', createdAt: serverTimestamp(), online: false, lastSeen: null })
     await addDoc(collection(budgetRef, 'profiles'), { name: 'Валерия', createdAt: serverTimestamp(), online: false, lastSeen: null })
+    
+    // Создаем базовые категории
+    const defaultCategories = [
+      { name: 'Зарплата', emoji: '💰', type: 'income', limit: 0 },
+      { name: 'Фриланс', emoji: '💻', type: 'income', limit: 0 },
+      { name: 'Подарки', emoji: '🎁', type: 'income', limit: 0 },
+      { name: 'Еда', emoji: '🍕', type: 'expense', limit: 0 },
+      { name: 'Транспорт', emoji: '🚗', type: 'expense', limit: 0 },
+      { name: 'Развлечения', emoji: '🎮', type: 'expense', limit: 0 },
+      { name: 'Покупки', emoji: '🛒', type: 'expense', limit: 0 },
+      { name: 'Здоровье', emoji: '🏥', type: 'expense', limit: 0 },
+      { name: 'Прочее', emoji: '📝', type: 'both', limit: 0 }
+    ]
+    
+    for (const category of defaultCategories) {
+      await addDoc(collection(budgetRef, 'categories'), {
+        ...category,
+        createdAt: serverTimestamp()
+      })
+    }
+    
     setBudgetId(budgetRef.id)
     setBudgetCode(code)
     localStorage.setItem('budgetId', budgetRef.id)
@@ -298,12 +321,30 @@ export function BudgetProvider({ children }) {
     await deleteDoc(doc(db, 'budgets', budgetId, 'operations', id))
   }
 
-  // Presence
-  async function setOnlineStatus(profileId, isOnline) {
-    await updateDoc(doc(db, 'budgets', budgetId, 'profiles', profileId), {
-      online: isOnline,
-      lastSeen: isOnline ? serverTimestamp() : new Date().toISOString()
-    })
+  // Получение текущего профиля пользователя
+  const getCurrentUserProfile = () => {
+    if (!user) return null
+    
+    // Ищем профиль по userId или по имени "Артур" (временно)
+    const userProfile = profiles.find(p => p.userId === user.uid) || 
+                       profiles.find(p => p.name === 'Артур')
+    
+    return userProfile
+  }
+
+  // Presence - улучшенная версия
+  async function setOnlineStatus(profileId, isOnline, deviceType = 'desktop') {
+    try {
+      await updateDoc(doc(db, 'budgets', budgetId, 'profiles', profileId), {
+        online: isOnline,
+        deviceType: deviceType,
+        lastSeen: serverTimestamp(),
+        userId: user?.uid || null
+      })
+      console.log(`🟢 Profile ${profileId} status: ${isOnline ? 'online' : 'offline'} on ${deviceType}`)
+    } catch (error) {
+      console.error('❌ Failed to update online status:', error)
+    }
   }
 
   const value = {
@@ -312,6 +353,7 @@ export function BudgetProvider({ children }) {
     createBudget, joinBudget,
 
     profiles, categories, goals, operations,
+    getCurrentUserProfile,
 
     addCategory, updateCategory, deleteCategory, setLimitForCategory,
     addGoal, contributeToGoal, getGoalSaved,

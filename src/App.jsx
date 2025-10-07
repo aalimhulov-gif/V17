@@ -8,6 +8,7 @@ import Categories from './pages/Categories.jsx'
 import Goals from './pages/Goals.jsx'
 import Operations from './pages/Operations.jsx'
 import Settings from './pages/Settings.jsx'
+import Limits from './pages/Limits.jsx'
 import Login from './pages/Login.jsx'
 import Register from './pages/Register.jsx'
 import Budget from './pages/Budget.jsx'
@@ -35,6 +36,7 @@ export default function App() {
               <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
               <Route path="/goals" element={<ProtectedRoute><Goals /></ProtectedRoute>} />
               <Route path="/operations" element={<ProtectedRoute><Operations /></ProtectedRoute>} />
+              <Route path="/limits" element={<ProtectedRoute><Limits /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
               <Route path="/debug" element={<ProtectedRoute><Debug /></ProtectedRoute>} />
