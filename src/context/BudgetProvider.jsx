@@ -324,37 +324,20 @@ export function BudgetProvider({ children }) {
   }
 
   async function createBudget() {
-    try {
-      if (!user) throw new Error('Необходимо войти в систему')
-      
-      const code = genCode(6)
-      const budgetRef = doc(collection(db, 'budgets'))
-      await setDoc(budgetRef, {
-        owner: user.uid,
-        createdAt: serverTimestamp(),
-        currency: 'PLN',
-        code
-      })
-      
-      // Создаем профили с привязкой к пользователю
-      const profileArtur = await addDoc(collection(db, 'budgets', budgetRef.id, 'profiles'), { 
-        name: 'Артур',
-        userId: user.uid, // Привязываем создателя к профилю Артура
-        createdAt: serverTimestamp(),
-        online: true,
-        lastSeen: serverTimestamp(),
-        lastLogin: serverTimestamp()
-      })
-      
-      // Создаем профиль Валерии без привязки
-      await addDoc(collection(db, 'budgets', budgetRef.id, 'profiles'), { 
-        name: 'Валерия',
-        createdAt: serverTimestamp(),
-        online: false,
-        lastSeen: null
-      })
-      
-      // Создаем базовые категории
+    const code = genCode(6)
+    const budgetRef = doc(collection(db, 'budgets'))
+    await setDoc(budgetRef, {
+      owner: user?.uid || null,
+      createdAt: serverTimestamp(),
+      currency: 'PLN',
+      code
+    })
+    
+    // Создаем профили
+    await addDoc(collection(budgetRef, 'profiles'), { name: 'Артур', createdAt: serverTimestamp(), online: false, lastSeen: null })
+    await addDoc(collection(budgetRef, 'profiles'), { name: 'Валерия', createdAt: serverTimestamp(), online: false, lastSeen: null })
+    
+    // Создаем базовые категории
     const defaultCategories = [
       { name: 'Зарплата', emoji: '💰', type: 'income', limit: 0 },
       { name: 'Фриланс', emoji: '💻', type: 'income', limit: 0 },
@@ -382,69 +365,29 @@ export function BudgetProvider({ children }) {
   }
 
   async function joinBudget(idOrCode) {
-    try {
-      if (!user) throw new Error('Необходимо войти в систему')
+    const raw = (idOrCode || '').trim()
+    if (!raw) throw new Error('Пустой ID/код бюджета')
 
-      const raw = (idOrCode || '').trim()
-      if (!raw) throw new Error('Пустой ID/код бюджета')
-
-      let budgetId = raw
-      let budgetData = null
-
-      // Пробуем найти по ID
-      const tryId = await getDoc(doc(db, 'budgets', raw))
-      if (tryId.exists()) {
-        budgetId = tryId.id
-        budgetData = tryId.data()
-      } else {
-        // Пробуем найти по коду
-        const q = query(collection(db, 'budgets'), where('code', '==', raw.toUpperCase()))
-        const snap = await getDocs(q)
-        if (!snap.empty) {
-          const d = snap.docs[0]
-          budgetId = d.id
-          budgetData = d.data()
-        } else {
-          throw new Error('Бюджет не найден')
-        }
-      }
-
-      // Проверяем не присоединен ли уже пользователь
-      const userBudgetRef = doc(db, 'users', user.uid, 'budgets', budgetId) 
-      const userBudgetDoc = await getDoc(userBudgetRef)
-      if (userBudgetDoc.exists()) {
-        throw new Error('Вы уже присоединены к этому бюджету')
-      }
-
-      // Присоединяем пользователя к бюджету
-      await setDoc(userBudgetRef, {
-        createdAt: serverTimestamp(),
-        accessLevel: 'member'
-      })
-      
-      // Создаем профиль пользователя
-      await addDoc(collection(db, 'budgets', budgetId, 'profiles'), {
-        name: user.displayName || 'Новый пользователь',
-        userId: user.uid,
-        createdAt: serverTimestamp(),
-        online: true,
-        lastSeen: serverTimestamp(),
-        lastLogin: serverTimestamp()
-      })
-
-      // Сохраняем ID и код бюджета
-      setBudgetId(budgetId)
-      if (budgetData?.code) {
-        setBudgetCode(budgetData.code)
-        localStorage.setItem('budgetCode', budgetData.code)
-      }
-      localStorage.setItem('budgetId', budgetId)
-      
-      return budgetId
-    } catch (error) {
-      console.error('Ошибка при присоединении к бюджету:', error)
-      throw error
+    const tryId = await getDoc(doc(db, 'budgets', raw))
+    if (tryId.exists()) {
+      setBudgetId(tryId.id)
+      setBudgetCode(tryId.data()?.code || '')
+      localStorage.setItem('budgetId', tryId.id)
+      if (tryId.data()?.code) localStorage.setItem('budgetCode', tryId.data().code)
+      return tryId.id
     }
+
+    const q = query(collection(db, 'budgets'), where('code', '==', raw.toUpperCase()))
+    const snap = await getDocs(q)
+    if (!snap.empty) {
+      const d = snap.docs[0]
+      setBudgetId(d.id)
+      setBudgetCode(d.data()?.code || '')
+      localStorage.setItem('budgetId', d.id)
+      if (d.data()?.code) localStorage.setItem('budgetCode', d.data().code)
+      return d.id
+    }
+    throw new Error('Бюджет не найден')
   }
 
   async function updateBudgetCode(newCode) {
@@ -537,26 +480,13 @@ export function BudgetProvider({ children }) {
   // Функция привязки профиля к пользователю
   async function assignProfileToUser(profileId, userId) {
     try {
-      if (!budgetId) throw new Error('No active budget')
-      
-      // Проверяем, не занят ли уже профиль
-      const profileRef = doc(db, 'budgets', budgetId, 'profiles', profileId)
-      const profileDoc = await getDoc(profileRef)
-      
-      if (profileDoc.exists() && profileDoc.data().userId && profileDoc.data().userId !== userId) {
-        throw new Error('Profile is already assigned to another user')
-      }
-      
-      await updateDoc(profileRef, {
+      await updateDoc(doc(db, 'budgets', budgetId, 'profiles', profileId), {
         userId: userId,
-        lastLogin: serverTimestamp(),
-        lastSeen: serverTimestamp(),
-        online: true
+        lastLogin: serverTimestamp()
       })
       console.log(`✅ Profile ${profileId} assigned to user ${userId}`)
     } catch (error) {
       console.error('❌ Failed to assign profile:', error)
-      throw error
     }
   }
 
