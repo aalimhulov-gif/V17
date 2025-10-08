@@ -22,66 +22,80 @@ export function BudgetProvider({ children }) {
   useEffect(() => {
     if (!user || !budgetId) return
 
+    console.log('🔄 Checking online status for user:', user.uid)
+    
     // Найти профиль текущего пользователя
     const userProfile = profiles.find(p => p.userId === user.uid)
-    if (!userProfile) return
+    if (!userProfile) {
+      console.log('❌ No profile found for user:', user.uid)
+      return
+    }
 
-    let isOnline = true // Флаг для отслеживания текущего состояния
+    console.log('✅ Found profile:', userProfile.id, 'for user:', user.uid)
 
-    // Обновить онлайн статус
+    // Функция для обновления статуса
     const updateOnlineStatus = async (status) => {
-      if (status === isOnline) return // Не обновляем, если статус не изменился
-
       const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+      
       try {
-        await updateDoc(profileRef, {
+        console.log(`🔄 Updating status to ${status ? 'online' : 'offline'} for profile:`, userProfile.id)
+        
+        const updateData = {
           online: status,
-          lastSeen: serverTimestamp(),
-          ...(status ? { lastLogin: serverTimestamp() } : {})
-        })
-        isOnline = status // Обновляем текущее состояние только после успешного обновления в БД
+          lastSeen: serverTimestamp()
+        }
+        
+        if (status) {
+          updateData.lastLogin = serverTimestamp()
+        }
+
+        await updateDoc(profileRef, updateData)
+        console.log('✅ Status updated successfully')
       } catch (error) {
-        console.error('Error updating online status:', error)
+        console.error('❌ Error updating online status:', error)
       }
     }
 
-    // Установить обработчики для отслеживания состояния подключения
+    // Установка начального онлайн статуса
+    updateOnlineStatus(true)
+
+    // Обработчики событий подключения
     const onlineHandler = () => {
-      console.log('🟢 Пользователь онлайн')
+      console.log('🟢 Browser went online')
       updateOnlineStatus(true)
     }
 
     const offlineHandler = () => {
-      console.log('🔴 Пользователь оффлайн')
+      console.log('🔴 Browser went offline')
       updateOnlineStatus(false)
     }
 
-    // Инициализация начального состояния
-    updateOnlineStatus(true)
+    const beforeUnloadHandler = () => {
+      console.log('👋 Window closing')
+      updateOnlineStatus(false)
+    }
 
-    // Добавить слушатели событий
+    // Добавляем слушатели
     window.addEventListener('online', onlineHandler)
     window.addEventListener('offline', offlineHandler)
-
-    // Обработка закрытия вкладки или выхода
-    const beforeUnloadHandler = () => {
-      updateOnlineStatus(false)
-    }
     window.addEventListener('beforeunload', beforeUnloadHandler)
 
-    // Проверка активности каждые 5 минут
-    const intervalId = setInterval(() => {
+    // Периодическое обновление статуса
+    const heartbeat = setInterval(() => {
+      console.log('💓 Heartbeat check')
       updateOnlineStatus(true)
-    }, 300000) // 5 минут
+    }, 60000) // каждую минуту
 
+    // Очистка при размонтировании
     return () => {
+      console.log('🧹 Cleaning up presence system')
       window.removeEventListener('online', onlineHandler)
       window.removeEventListener('offline', offlineHandler)
       window.removeEventListener('beforeunload', beforeUnloadHandler)
-      clearInterval(intervalId)
+      clearInterval(heartbeat)
       updateOnlineStatus(false)
     }
-  }, [user?.uid, budgetId]) // Убрали profiles из зависимостей
+  }, [user?.uid, budgetId, profiles])
 
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'PLN')
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
@@ -450,6 +464,26 @@ export function BudgetProvider({ children }) {
   }
 
   // Получение текущего профиля пользователя
+  // Функция для принудительного обновления статуса
+  const updatePresenceStatus = async (status) => {
+    if (!user || !budgetId) return
+    
+    const userProfile = profiles.find(p => p.userId === user.uid)
+    if (!userProfile) return
+    
+    try {
+      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+      await updateDoc(profileRef, {
+        online: status,
+        lastSeen: serverTimestamp(),
+        ...(status ? { lastLogin: serverTimestamp() } : {})
+      })
+      console.log('✅ Presence status manually updated:', status)
+    } catch (error) {
+      console.error('❌ Error updating presence status:', error)
+    }
+  }
+
   const getCurrentUserProfile = () => {
     if (!user) return null
     
@@ -586,8 +620,7 @@ export function BudgetProvider({ children }) {
     currency, setCurrency,
     theme, setTheme, toggleTheme,
     rates, convert,
-
-    setOnlineStatus
+    updatePresenceStatus
   }
 
   return <BudgetCtx.Provider value={value}>{children}</BudgetCtx.Provider>
