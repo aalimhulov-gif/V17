@@ -75,16 +75,12 @@ export default function Goals() {
   }
 
   const confirmDelete = async () => {
-    if (!goalToDelete) return
-
     try {
-      setDeleteConfirmOpen(false) // Закрываем модальное окно сразу
-      const goalId = goalToDelete.id
-      setGoalToDelete(null) // Очищаем состояние
-      await deleteGoal(goalId) // Удаляем цель
+      await deleteGoal(goalToDelete.id)
+      setDeleteConfirmOpen(false)
+      setGoalToDelete(null)
     } catch (error) {
       console.error('Error deleting goal:', error)
-      setDeleteConfirmOpen(true) // Если произошла ошибка, показываем окно снова
     }
   }
 

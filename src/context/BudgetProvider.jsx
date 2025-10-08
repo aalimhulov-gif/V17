@@ -22,80 +22,65 @@ export function BudgetProvider({ children }) {
   useEffect(() => {
     if (!user || !budgetId) return
 
-    console.log('🔄 Checking online status for user:', user.uid)
-    
     // Найти профиль текущего пользователя
     const userProfile = profiles.find(p => p.userId === user.uid)
-    if (!userProfile) {
-      console.log('❌ No profile found for user:', user.uid)
-      return
+    if (!userProfile) return
+
+    // Обновить онлайн статус
+    const updateOnlineStatus = async () => {
+      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+      await updateDoc(profileRef, {
+        online: true,
+        lastLogin: serverTimestamp(),
+        lastSeen: serverTimestamp()
+      })
     }
 
-    console.log('✅ Found profile:', userProfile.id, 'for user:', user.uid)
+    // Обновить статус при загрузке
+    updateOnlineStatus()
 
-    // Функция для обновления статуса
-    const updateOnlineStatus = async (status) => {
-      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
-      
-      try {
-        console.log(`🔄 Updating status to ${status ? 'online' : 'offline'} for profile:`, userProfile.id)
-        
-        const updateData = {
-          online: status,
-          lastSeen: serverTimestamp()
-        }
-        
-        if (status) {
-          updateData.lastLogin = serverTimestamp()
-        }
+    // Установить обработчики для отслеживания состояния подключения
+    const onlineHandler = () => {
+      console.log('🟢 Пользователь онлайн')
+      updateOnlineStatus()
+    }
 
-        await updateDoc(profileRef, updateData)
-        console.log('✅ Status updated successfully')
-      } catch (error) {
-        console.error('❌ Error updating online status:', error)
+    const offlineHandler = async () => {
+      console.log('🔴 Пользователь оффлайн')
+      if (userProfile) {
+        const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+        try {
+          await updateDoc(profileRef, {
+            online: false,
+            lastSeen: serverTimestamp()
+          })
+        } catch (error) {
+          console.error('Error updating offline status:', error)
+        }
       }
     }
 
-    // Установка начального онлайн статуса
-    updateOnlineStatus(true)
-
-    // Обработчики событий подключения
-    const onlineHandler = () => {
-      console.log('🟢 Browser went online')
-      updateOnlineStatus(true)
-    }
-
-    const offlineHandler = () => {
-      console.log('🔴 Browser went offline')
-      updateOnlineStatus(false)
-    }
-
-    const beforeUnloadHandler = () => {
-      console.log('👋 Window closing')
-      updateOnlineStatus(false)
-    }
-
-    // Добавляем слушатели
+    // Добавить слушатели событий
     window.addEventListener('online', onlineHandler)
     window.addEventListener('offline', offlineHandler)
+
+    // Обновлять lastSeen каждую минуту, пока пользователь активен
+    const intervalId = setInterval(updateOnlineStatus, 60000)
+
+    // Обработка закрытия вкладки или выхода
+    const beforeUnloadHandler = () => {
+      offlineHandler()
+    }
     window.addEventListener('beforeunload', beforeUnloadHandler)
 
-    // Периодическое обновление статуса
-    const heartbeat = setInterval(() => {
-      console.log('💓 Heartbeat check')
-      updateOnlineStatus(true)
-    }, 60000) // каждую минуту
-
-    // Очистка при размонтировании
     return () => {
-      console.log('🧹 Cleaning up presence system')
       window.removeEventListener('online', onlineHandler)
       window.removeEventListener('offline', offlineHandler)
       window.removeEventListener('beforeunload', beforeUnloadHandler)
-      clearInterval(heartbeat)
-      updateOnlineStatus(false)
+      clearInterval(intervalId)
+      offlineHandler() // Установить статус оффлайн при размонтировании
     }
-  }, [user?.uid, budgetId, profiles])
+  }, [user, budgetId, profiles])
 
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'PLN')
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
@@ -464,26 +449,6 @@ export function BudgetProvider({ children }) {
   }
 
   // Получение текущего профиля пользователя
-  // Функция для принудительного обновления статуса
-  const updatePresenceStatus = async (status) => {
-    if (!user || !budgetId) return
-    
-    const userProfile = profiles.find(p => p.userId === user.uid)
-    if (!userProfile) return
-    
-    try {
-      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
-      await updateDoc(profileRef, {
-        online: status,
-        lastSeen: serverTimestamp(),
-        ...(status ? { lastLogin: serverTimestamp() } : {})
-      })
-      console.log('✅ Presence status manually updated:', status)
-    } catch (error) {
-      console.error('❌ Error updating presence status:', error)
-    }
-  }
-
   const getCurrentUserProfile = () => {
     if (!user) return null
     
@@ -620,7 +585,8 @@ export function BudgetProvider({ children }) {
     currency, setCurrency,
     theme, setTheme, toggleTheme,
     rates, convert,
-    updatePresenceStatus
+
+    setOnlineStatus
   }
 
   return <BudgetCtx.Provider value={value}>{children}</BudgetCtx.Provider>
