@@ -480,13 +480,26 @@ export function BudgetProvider({ children }) {
   // Функция привязки профиля к пользователю
   async function assignProfileToUser(profileId, userId) {
     try {
-      await updateDoc(doc(db, 'budgets', budgetId, 'profiles', profileId), {
+      if (!budgetId) throw new Error('No active budget')
+      
+      // Проверяем, не занят ли уже профиль
+      const profileRef = doc(db, 'budgets', budgetId, 'profiles', profileId)
+      const profileDoc = await getDoc(profileRef)
+      
+      if (profileDoc.exists() && profileDoc.data().userId && profileDoc.data().userId !== userId) {
+        throw new Error('Profile is already assigned to another user')
+      }
+      
+      await updateDoc(profileRef, {
         userId: userId,
-        lastLogin: serverTimestamp()
+        lastLogin: serverTimestamp(),
+        lastSeen: serverTimestamp(),
+        online: true
       })
       console.log(`✅ Profile ${profileId} assigned to user ${userId}`)
     } catch (error) {
       console.error('❌ Failed to assign profile:', error)
+      throw error
     }
   }
 

@@ -16,7 +16,10 @@ export default function ProfileSelector() {
   const handleSelectProfile = async (profileId) => {
     try {
       playSound('click')
-      await assignProfileToUser(profileId, user.uid)
+      // Используем userId из URL параметра или текущего пользователя
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetUserId = urlParams.get('userId') || user.uid;
+      await assignProfileToUser(profileId, targetUserId)
       playSound('success')
     } catch (error) {
       console.error('Error assigning profile:', error)
