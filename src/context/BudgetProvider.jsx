@@ -26,61 +26,62 @@ export function BudgetProvider({ children }) {
     const userProfile = profiles.find(p => p.userId === user.uid)
     if (!userProfile) return
 
-    // Обновить онлайн статус
-    const updateOnlineStatus = async () => {
-      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
-      await updateDoc(profileRef, {
-        online: true,
-        lastLogin: serverTimestamp(),
-        lastSeen: serverTimestamp()
-      })
-    }
+    let isOnline = true // Флаг для отслеживания текущего состояния
 
-    // Обновить статус при загрузке
-    updateOnlineStatus()
+    // Обновить онлайн статус
+    const updateOnlineStatus = async (status) => {
+      if (status === isOnline) return // Не обновляем, если статус не изменился
+
+      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+      try {
+        await updateDoc(profileRef, {
+          online: status,
+          lastSeen: serverTimestamp(),
+          ...(status ? { lastLogin: serverTimestamp() } : {})
+        })
+        isOnline = status // Обновляем текущее состояние только после успешного обновления в БД
+      } catch (error) {
+        console.error('Error updating online status:', error)
+      }
+    }
 
     // Установить обработчики для отслеживания состояния подключения
     const onlineHandler = () => {
       console.log('🟢 Пользователь онлайн')
-      updateOnlineStatus()
+      updateOnlineStatus(true)
     }
 
-    const offlineHandler = async () => {
+    const offlineHandler = () => {
       console.log('🔴 Пользователь оффлайн')
-      if (userProfile) {
-        const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
-        try {
-          await updateDoc(profileRef, {
-            online: false,
-            lastSeen: serverTimestamp()
-          })
-        } catch (error) {
-          console.error('Error updating offline status:', error)
-        }
-      }
+      updateOnlineStatus(false)
     }
+
+    // Инициализация начального состояния
+    updateOnlineStatus(true)
 
     // Добавить слушатели событий
     window.addEventListener('online', onlineHandler)
     window.addEventListener('offline', offlineHandler)
 
-    // Обновлять lastSeen каждую минуту, пока пользователь активен
-    const intervalId = setInterval(updateOnlineStatus, 60000)
-
     // Обработка закрытия вкладки или выхода
     const beforeUnloadHandler = () => {
-      offlineHandler()
+      updateOnlineStatus(false)
     }
     window.addEventListener('beforeunload', beforeUnloadHandler)
+
+    // Проверка активности каждые 5 минут
+    const intervalId = setInterval(() => {
+      updateOnlineStatus(true)
+    }, 300000) // 5 минут
 
     return () => {
       window.removeEventListener('online', onlineHandler)
       window.removeEventListener('offline', offlineHandler)
       window.removeEventListener('beforeunload', beforeUnloadHandler)
       clearInterval(intervalId)
-      offlineHandler() // Установить статус оффлайн при размонтировании
+      updateOnlineStatus(false)
     }
-  }, [user, budgetId, profiles])
+  }, [user?.uid, budgetId]) // Убрали profiles из зависимостей
 
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'PLN')
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')

@@ -75,28 +75,18 @@ export default function Navbar() {
 
         {/* Десктопная навигация */}
         {!isAuthPage && (
-          <nav className="hidden lg:flex items-center gap-2 p-2 rounded-2xl" 
-               style={{
-                 background: 'rgba(255, 255, 255, 0.05)',
-                 backdropFilter: 'blur(10px)',
-                 border: '1px solid rgba(255, 255, 255, 0.1)'
-               }}>
+          <nav className="hidden lg:flex items-center gap-2 p-2 rounded-2xl bg-white/5 backdrop-blur-lg border border-white/10">
             {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) => 
-                `relative flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-300 overflow-hidden group ${
+                `relative h-10 flex items-center px-4 rounded-xl font-medium transition-all duration-300 ${
                   isActive 
-                    ? 'text-white' 
-                    : 'text-zinc-400 hover:text-white'
+                    ? 'text-white bg-gradient-to-r from-indigo-500/30 to-purple-500/30 shadow-lg shadow-indigo-500/20' 
+                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`
               }
-              style={({ isActive }) => isActive ? {
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3))',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
-              } : {}}
             >
               <span className="relative z-10">{item.label}</span>
               {/* Hover эффект */}
@@ -128,12 +118,7 @@ export default function Navbar() {
           {!isAuthPage && (
             <button
               onClick={toggleTheme}
-              className="p-3 rounded-xl hover:scale-110 transition-all duration-300 group"
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.1)'
-              }}
+              className="hidden md:flex h-10 w-10 items-center justify-center rounded-xl hover:scale-110 transition-all duration-300 group bg-white/5 backdrop-blur-lg border border-white/10"
             >
               <span className="text-lg group-hover:rotate-180 transition-transform duration-500 block">
                 {theme === 'dark' ? '☀️' : '🌙'}
@@ -146,14 +131,9 @@ export default function Navbar() {
             <>
               {/* Аватар пользователя */}
               <div 
-                className="hidden md:flex items-center gap-3 px-4 py-2 rounded-xl hover:scale-105 transition-all duration-300 group cursor-pointer"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                }}
+                className="hidden md:flex items-center h-10 gap-3 px-4 rounded-xl hover:scale-105 transition-all duration-300 group cursor-pointer bg-white/5 backdrop-blur-lg border border-white/10"
               >
-                <div className="w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shadow-lg group-hover:rotate-12 transition-transform duration-300">
+                <div className="w-6 h-6 rounded-lg bg-gradient-primary flex items-center justify-center text-white text-sm font-bold shadow-lg group-hover:rotate-12 transition-transform duration-300">
                   {user.email?.charAt(0).toUpperCase()}
                 </div>
                 <span className="text-sm text-zinc-300 max-w-32 truncate">
@@ -164,12 +144,7 @@ export default function Navbar() {
               {/* Кнопка выхода */}
               <button
                 onClick={handleLogout}
-                className="p-3 rounded-xl hover:scale-110 transition-all duration-300 group hover:bg-red-500/20"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)'
-                }}
+                className="hidden md:flex h-10 w-10 items-center justify-center rounded-xl hover:scale-110 transition-all duration-300 group hover:bg-red-500/20 bg-white/5 backdrop-blur-lg border border-white/10"
                 title="Выйти"
               >
                 <span className="text-lg group-hover:rotate-12 transition-transform duration-300 block">
@@ -207,7 +182,7 @@ export default function Navbar() {
           {!isAuthPage && (
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-3 rounded-xl hover:scale-110 transition-all duration-300 group"
+              className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:scale-110 transition-all duration-300 group bg-white/5 backdrop-blur-lg border border-white/10"
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
                 backdropFilter: 'blur(10px)',
@@ -344,35 +319,20 @@ export default function Navbar() {
               ))}
             </nav>
 
-            {/* Нижняя панель */}
-            <div className="space-y-3 pt-4 border-t border-white/10">
-              <button
-                onClick={toggleTheme}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white transition-all duration-300 group"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.03)'
-                }}
-              >
-                <span className="text-lg group-hover:rotate-180 transition-transform duration-500">
-                  {theme === 'dark' ? '☀️' : '🌙'}
-                </span>
-                <span>Переключить тему</span>
-              </button>
-              
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setMobileOpen(false);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-red-400 transition-all duration-300 group hover:bg-red-500/10"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.03)'
-                }}
-              >
-                <span className="text-lg group-hover:rotate-12 transition-transform duration-300">🚪</span>
-                <span>Выйти</span>
-              </button>
-            </div>
+            {/* Профиль в мобильном меню */}
+            {user && (
+              <div className="pt-4 border-t border-white/10">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white font-bold shadow-lg">
+                    {user.email?.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-medium">{user.email}</span>
+                    <span className="text-sm text-zinc-400">Онлайн</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>,
