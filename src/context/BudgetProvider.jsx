@@ -18,6 +18,70 @@ export function BudgetProvider({ children }) {
   const [goals, setGoals] = useState([])
   const [operations, setOperations] = useState([])
 
+  // Обновление онлайн статуса
+  useEffect(() => {
+    if (!user || !budgetId) return
+
+    // Найти профиль текущего пользователя
+    const userProfile = profiles.find(p => p.userId === user.uid)
+    if (!userProfile) return
+
+    // Обновить онлайн статус
+    const updateOnlineStatus = async () => {
+      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+      await updateDoc(profileRef, {
+        online: true,
+        lastLogin: serverTimestamp(),
+        lastSeen: serverTimestamp()
+      })
+    }
+
+    // Обновить статус при загрузке
+    updateOnlineStatus()
+
+    // Установить обработчики для отслеживания состояния подключения
+    const onlineHandler = () => {
+      console.log('🟢 Пользователь онлайн')
+      updateOnlineStatus()
+    }
+
+    const offlineHandler = async () => {
+      console.log('🔴 Пользователь оффлайн')
+      if (userProfile) {
+        const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+        try {
+          await updateDoc(profileRef, {
+            online: false,
+            lastSeen: serverTimestamp()
+          })
+        } catch (error) {
+          console.error('Error updating offline status:', error)
+        }
+      }
+    }
+
+    // Добавить слушатели событий
+    window.addEventListener('online', onlineHandler)
+    window.addEventListener('offline', offlineHandler)
+
+    // Обновлять lastSeen каждую минуту, пока пользователь активен
+    const intervalId = setInterval(updateOnlineStatus, 60000)
+
+    // Обработка закрытия вкладки или выхода
+    const beforeUnloadHandler = () => {
+      offlineHandler()
+    }
+    window.addEventListener('beforeunload', beforeUnloadHandler)
+
+    return () => {
+      window.removeEventListener('online', onlineHandler)
+      window.removeEventListener('offline', offlineHandler)
+      window.removeEventListener('beforeunload', beforeUnloadHandler)
+      clearInterval(intervalId)
+      offlineHandler() // Установить статус оффлайн при размонтировании
+    }
+  }, [user, budgetId, profiles])
+
   const [currency, setCurrency] = useState(localStorage.getItem('currency') || 'PLN')
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
   const [rates, setRates] = useState({ PLN: 1, USD: 0.25, UAH: 10.5 })
@@ -512,7 +576,7 @@ export function BudgetProvider({ children }) {
     getCurrentUserProfile, assignProfileToUser, createProfileForUser,
 
     addCategory, updateCategory, deleteCategory, setLimitForCategory,
-    addGoal, contributeToGoal, getGoalSaved,
+    addGoal, editGoal, deleteGoal, contributeToGoal, getGoalSaved,
     addOperation, deleteOperation,
 
     balances, totals, totalsByProfile,

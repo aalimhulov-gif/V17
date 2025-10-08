@@ -87,9 +87,22 @@ export default function ProfileSelector() {
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
                     {profile.name.charAt(0).toUpperCase()}
                   </div>
-                  <div>
-                    <div className="text-white font-medium">{profile.name}</div>
-                    <div className="text-sm text-zinc-400">Нажмите, чтобы выбрать</div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="text-white font-medium">{profile.name}</div>
+                      {profile.online && (
+                        <div className="flex items-center">
+                          <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm text-zinc-400">
+                      {profile.lastSeen ? (
+                        profile.online ? 
+                          'Онлайн' : 
+                          `Был(а) в сети ${new Date(profile.lastSeen.toDate()).toLocaleString()}`
+                      ) : 'Нажмите, чтобы выбрать'}
+                    </div>
                   </div>
                 </div>
               </button>
