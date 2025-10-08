@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   base: './', // Используем относительные пути для GitHub Pages
   build: {
-    outDir: 'dist',
+    outDir: 'docs', // Меняем папку сборки на docs
     assetsDir: 'assets',
   }
 })
