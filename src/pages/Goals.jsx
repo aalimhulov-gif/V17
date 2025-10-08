@@ -17,6 +17,8 @@ export default function Goals() {
   const [profileId, setProfileId] = useState('')
   const [sum, setSum] = useState('')
   const [editingGoal, setEditingGoal] = useState(null)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [goalToDelete, setGoalToDelete] = useState(null)
 
   // добавление новой цели
   const add = async (e) => {
@@ -67,9 +69,18 @@ export default function Goals() {
   }
 
   // удаление цели
-  const handleDelete = async (goalId) => {
-    if (window.confirm('Вы уверены, что хотите удалить эту цель?')) {
-      await deleteGoal(goalId)
+  const handleDelete = async (goal) => {
+    setGoalToDelete(goal)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    try {
+      await deleteGoal(goalToDelete.id)
+      setDeleteConfirmOpen(false)
+      setGoalToDelete(null)
+    } catch (error) {
+      console.error('Error deleting goal:', error)
     }
   }
 
@@ -219,7 +230,7 @@ export default function Goals() {
                           ✏️
                         </button>
                         <button
-                          onClick={() => handleDelete(goal.id)}
+                          onClick={() => handleDelete(goal)}
                           className="btn-secondary py-2 px-3 text-sm rounded-xl hover:scale-105 transition-transform hover:bg-red-500/20"
                           title="Удалить"
                         >
@@ -541,6 +552,68 @@ export default function Goals() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Модалка подтверждения удаления */}
+      <Modal
+        open={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false)
+          setGoalToDelete(null)
+        }}
+        title="Удаление цели"
+      >
+        <div className="space-y-6">
+          {goalToDelete && (
+            <div className="text-center space-y-4">
+              <div className="text-4xl mb-4">{goalToDelete.emoji || '🎯'}</div>
+              <h3 className="text-xl font-medium text-zinc-200">
+                Удалить цель "{goalToDelete.name}"?
+              </h3>
+              <p className="text-zinc-400">
+                Это действие нельзя будет отменить. Все данные о цели и прогрессе будут удалены.
+              </p>
+              
+              {/* Информация о цели */}
+              <div className="bg-zinc-800/50 rounded-xl p-4 mt-4 text-left">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-zinc-400">Целевая сумма:</span>
+                  <span className="text-white">{convert(goalToDelete.amount).toFixed(2)} {currency}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-zinc-400">Накоплено:</span>
+                  <span className="text-white">{convert(getGoalSaved(goalToDelete.id)).toFixed(2)} {currency}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="flex gap-3 pt-4">
+            <button 
+              onClick={() => {
+                setDeleteConfirmOpen(false)
+                setGoalToDelete(null)
+              }}
+              className="flex-1 px-6 py-3 rounded-xl border border-white/20 text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              Отмена
+            </button>
+            <button 
+              onClick={confirmDelete}
+              className="flex-1 px-6 py-3 rounded-xl border border-red-500/30 text-white hover:bg-gradient-to-r hover:from-red-500/20 hover:to-red-600/20 transition-all duration-300 backdrop-blur-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.2))',
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              Удалить
+            </button>
+          </div>
+        </div>
       </Modal>
     </motion.div>
   )
