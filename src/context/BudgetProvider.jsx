@@ -65,6 +65,42 @@ export function BudgetProvider({ children }) {
   // Live subscriptions
   useEffect(() => {
     if (!user || !budgetId) return
+
+    // Проверяем права доступа к бюджету
+    const checkBudgetAccess = async () => {
+      try {
+        const budgetRef = doc(db, 'budgets', budgetId)
+        const budgetDoc = await getDoc(budgetRef)
+        
+        if (!budgetDoc.exists()) {
+          console.error('Budget not found')
+          localStorage.removeItem('budgetId')
+          localStorage.removeItem('budgetCode')
+          setBudgetId(null)
+          setBudgetCode('')
+          return
+        }
+
+        // Проверяем профили в бюджете
+        const profilesRef = collection(db, 'budgets', budgetId, 'profiles')
+        const profilesSnap = await getDocs(profilesRef)
+        const hasAccess = profilesSnap.docs.some(doc => doc.data().userId === user.uid)
+
+        if (!hasAccess) {
+          console.error('User has no access to this budget')
+          localStorage.removeItem('budgetId')
+          localStorage.removeItem('budgetCode')
+          setBudgetId(null)
+          setBudgetCode('')
+          return
+        }
+      } catch (error) {
+        console.error('Error checking budget access:', error)
+        return
+      }
+    }
+
+    checkBudgetAccess()
     
     try {
       const unsubProfiles = onSnapshot(
