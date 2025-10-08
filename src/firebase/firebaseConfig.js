@@ -5,14 +5,13 @@ import { getFirestore } from 'firebase/firestore'
 
 // ЗАМЕНИТЕ ПЛЕЙСХОЛДЕРЫ НА СВОИ ДАННЫЕ ИЗ FIREBASE CONSOLE
 const firebaseConfig = {
-  apiKey: "AIzaSyCGN93LsNnRGcqGpesVWAg8jP0m6XsQAuA",
-  authDomain: "budget-ami.firebaseapp.com",
-  databaseURL: "https://budget-ami-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "budget-ami",
-  storageBucket: "budget-ami.firebasestorage.app",
-  messagingSenderId: "976854941281",
-  appId: "1:976854941281:web:f40e81033cf52d236af420"
-}
+  apiKey: "AIzaSyChItXpa02_QJXSJV3ohKjUNNi8xdW8Unw",
+  authDomain: "budget-6378f.firebaseapp.com",
+  projectId: "budget-6378f",
+  storageBucket: "budget-6378f.firebasestorage.app",
+  messagingSenderId: "267770745885",
+  appId: "1:267770745885:web:a15384f0d1782c4c3222f4"
+};
 
 console.log('🔧 Initializing Firebase...')
 console.log('Config check:', {

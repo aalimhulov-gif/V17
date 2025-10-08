@@ -18,7 +18,7 @@ export function BudgetProvider({ children }) {
   const [goals, setGoals] = useState([])
   const [operations, setOperations] = useState([])
 
-  // Обновление онлайн статуса
+  // Обновление онлайн статуса с оптимизацией запросов
   useEffect(() => {
     if (!user || !budgetId) return
 
@@ -26,14 +26,28 @@ export function BudgetProvider({ children }) {
     const userProfile = profiles.find(p => p.userId === user.uid)
     if (!userProfile) return
 
-    // Обновить онлайн статус
+    let lastUpdate = 0
+    const updateInterval = 60000 // Минимальный интервал между обновлениями - 1 минута
+
+    // Обновить онлайн статус с защитой от частых обновлений
     const updateOnlineStatus = async () => {
-      const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
-      await updateDoc(profileRef, {
-        online: true,
-        lastLogin: serverTimestamp(),
-        lastSeen: serverTimestamp()
-      })
+      const now = Date.now()
+      if (now - lastUpdate < updateInterval) {
+        return // Пропускаем обновление если прошло меньше минуты
+      }
+
+      try {
+        const profileRef = doc(db, 'budgets', budgetId, 'profiles', userProfile.id)
+        await updateDoc(profileRef, {
+          online: true,
+          lastSeen: serverTimestamp(),
+          // Обновляем lastLogin только при первом входе
+          ...(lastUpdate === 0 ? { lastLogin: serverTimestamp() } : {})
+        })
+        lastUpdate = now
+      } catch (error) {
+        console.error('Failed to update online status:', error)
+      }
     }
 
     // Обновить статус при загрузке
@@ -65,11 +79,14 @@ export function BudgetProvider({ children }) {
     window.addEventListener('offline', offlineHandler)
 
     // Обновлять lastSeen каждую минуту, пока пользователь активен
-    const intervalId = setInterval(updateOnlineStatus, 60000)
+    // Обновляем статус реже - раз в 5 минут вместо каждой минуты
+    const intervalId = setInterval(updateOnlineStatus, 300000)
 
-    // Обработка закрытия вкладки или выхода
+    // Используем debounce для обработки закрытия вкладки
+    let timeoutId
     const beforeUnloadHandler = () => {
-      offlineHandler()
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(offlineHandler, 5000)
     }
     window.addEventListener('beforeunload', beforeUnloadHandler)
 
@@ -78,7 +95,11 @@ export function BudgetProvider({ children }) {
       window.removeEventListener('offline', offlineHandler)
       window.removeEventListener('beforeunload', beforeUnloadHandler)
       clearInterval(intervalId)
-      offlineHandler() // Установить статус оффлайн при размонтировании
+      clearTimeout(timeoutId)
+      // Не обновляем статус при каждом размонтировании компонента
+      if (window.closed) {
+        offlineHandler()
+      }
     }
   }, [user, budgetId, profiles])
 
